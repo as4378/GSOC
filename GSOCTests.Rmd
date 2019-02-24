@@ -1,0 +1,265 @@
+---
+title: "GSOC Tests"
+author: "Anuraag Srivastava(as4378)"
+date: "February 22, 2019"
+output:
+  pdf_document: default
+  html_document:
+    df_print: paged
+---
+
+**Test 1**
+
+Run either changepoint::cpt.mean or Fpop::fpop on one of the data sets (vector of logratio values for a given profile.id/chromosome combination) in neuroblatoma$profiles from data(neuroblastoma, package="neuroblastoma"). For one penalty parameter, plot the data as black points and the optimal segment means as horizontal green line segments.
+
+\vspace{1cm}
+Loading the required packages:
+
+
+```{r}
+
+data(neuroblastoma, package="neuroblastoma")
+options(width=100)
+```
+\vspace{1cm}
+
+Selecting one profile id to continue with the test. This profile is of a children status "relapse" several years after treatment, hence a good candidate for change point detection problem.
+
+
+```{r}
+selected <- data.frame(
+  profile.id=paste(c(1)),
+  status=c("relapse"))
+selected
+```
+\vspace{1cm}
+
+Creating a data table for selected profile:
+
+
+```{r}
+rownames(selected) <- selected$profile.id
+selected$status.profile <- with(selected, paste(status, profile.id))
+some.ids <- rownames(selected)
+library(data.table)
+someProfiles <- function(all.profiles){
+  some <- subset(all.profiles, paste(profile.id) %in% some.ids)
+  status.profile <- selected[paste(some$profile.id), "status.profile"]
+  some$status.profile <- ifelse(
+    is.na(status.profile), paste(some$profile.id), status.profile)
+  data.table(some)
+}
+selected.profiles <- someProfiles(neuroblastoma$profiles)
+```
+
+\vspace{2cm}
+
+Now, for selected profile there are 24 change-point detection problems (24 chromosomes). Plotting this problem in a grid we get:
+
+
+```{r}
+library(ggplot2)
+gg.unsupervised <- ggplot()+
+  ggtitle("unsupervised changepoint detection = only noisy data sequences")+
+  theme(
+    panel.margin=grid::unit(0, "lines"),
+    panel.border=element_rect(fill=NA, color="grey50")
+  )+
+  facet_grid(status.profile ~ chromosome, scales="free", space="free_x")+
+  geom_point(aes(position/1e6, logratio),
+             data=selected.profiles,
+             shape=1)+
+  scale_x_continuous(
+    "position on chromosome (mega bases)",
+    breaks=c(100, 200))+
+  scale_y_continuous(
+    "logratio (approximate DNA copy number)",
+    limits=c(-1,1)*1.1)
+print(gg.unsupervised)
+```
+
+
+Now, fitting the unsupervised change point model using the cpt.mean function and using "SIC0" as the penalty parameter we get:
+
+\vspace{1cm}
+```{r}
+pen.name <- "SIC0"
+(unsupervised.models <- selected.profiles[, {
+  fit.pelt <- changepoint::cpt.mean(
+    logratio, penalty=pen.name, method="PELT")
+  end <- fit.pelt@cpts
+  before.change <- end[-length(end)]
+  after.change <- before.change+1L
+  data.table(
+    pen.name,
+    pen.value=fit.pelt@pen.value,
+    changes=list(
+    as.integer((position[before.change]+position[after.change])/2)
+    ))
+}, by=list(profile.id, status.profile, chromosome)])
+
+
+(unsupervised.changes <- unsupervised.models[, data.table(
+  change=changes[[1]]
+), by=list(profile.id, status.profile, chromosome, pen.name)])
+```
+
+
+\vspace{1cm}
+Plotting the data along with optimal segment means (green line segments) we get:
+
+
+```{r}
+gg.unsupervised+
+  theme(legend.box="horizontal")+
+  geom_vline(aes(
+    xintercept=change/1e6),
+    color="green",
+    size=1,
+    linetype="dashed",
+    data=unsupervised.changes)
+```
+
+
+
+**Test 2**
+
+For two data sets and three penalty parameters, plot the data and optimal models using a ggplot with facet_grid(segments ~ profile.id + chromosome)
+
+
+\vspace{1cm}
+
+This time selecting 2 profiles with status "relapse".
+
+
+```{r}
+selected <- data.frame(
+  profile.id=paste(c(1, 4)),
+  status=c("relapse", "relapse"))
+selected
+```
+
+\vspace{1cm}
+Creating data table for selected profiles:
+
+
+```{r}
+rownames(selected) <- selected$profile.id
+selected$status.profile <- with(selected, paste(status, profile.id))
+some.ids <- rownames(selected)
+library(data.table)
+someProfiles <- function(all.profiles){
+  some <- subset(all.profiles, paste(profile.id) %in% some.ids)
+  status.profile <- selected[paste(some$profile.id), "status.profile"]
+  some$status.profile <- ifelse(
+    is.na(status.profile), paste(some$profile.id), status.profile)
+  data.table(some)
+}
+selected.profiles <- someProfiles(neuroblastoma$profiles)
+```
+
+\vspace{1cm}
+Printing the problems (24 * 2 = 48):
+
+```{r}
+library(ggplot2)
+gg.unsupervised <- ggplot()+
+  ggtitle("unsupervised changepoint detection = only noisy data sequences")+
+  theme(
+    panel.margin=grid::unit(0, "lines"),
+    panel.border=element_rect(fill=NA, color="grey50")
+  )+
+  facet_grid(status.profile ~ chromosome, scales="free", space="free_x")+
+  geom_point(aes(position/1e6, logratio),
+             data=selected.profiles,
+             shape=1)+
+  scale_x_continuous(
+    "position on chromosome (mega bases)",
+    breaks=c(100, 200))+
+  scale_y_continuous(
+    "logratio (approximate DNA copy number)",
+    limits=c(-1,1)*1.1)
+print(gg.unsupervised)
+```
+
+
+
+\vspace{1cm}
+
+Now, fitting the unsupervised change point model using the cpt.mean function and using 3 penalty paramters "SIC0, BIC0 and AIC0" we get:
+
+
+```{r}
+pen.name <- "SIC0"
+(unsupervised.models <- selected.profiles[, {
+  fit.pelt <- changepoint::cpt.mean(
+    logratio, penalty=pen.name, method="PELT")
+  end <- fit.pelt@cpts
+  before.change <- end[-length(end)]
+  after.change <- before.change+1L
+  data.table(
+    pen.name,
+    pen.value=fit.pelt@pen.value,
+    changes=list(
+    as.integer((position[before.change]+position[after.change])/2)
+    ))
+}, by=list(profile.id, status.profile, chromosome)])
+
+pen.name <- "BIC0"
+(unsupervised.models1 <- selected.profiles[, {
+  fit.pelt <- changepoint::cpt.mean(
+    logratio, penalty=pen.name, method="PELT")
+  end <- fit.pelt@cpts
+  before.change <- end[-length(end)]
+  after.change <- before.change+1L
+  data.table(
+    pen.name,
+    pen.value=fit.pelt@pen.value,
+    changes=list(
+    as.integer((position[before.change]+position[after.change])/2)
+    ))
+}, by=list(profile.id, status.profile, chromosome)])
+
+unsupervised.models <- rbind(unsupervised.models, unsupervised.models1)
+
+
+pen.name <- "AIC0"
+(unsupervised.models2 <- selected.profiles[, {
+  fit.pelt <- changepoint::cpt.mean(
+    logratio, penalty=pen.name, method="PELT")
+  end <- fit.pelt@cpts
+  before.change <- end[-length(end)]
+  after.change <- before.change+1L
+  data.table(
+    pen.name,
+    pen.value=fit.pelt@pen.value,
+    changes=list(
+    as.integer((position[before.change]+position[after.change])/2)
+    ))
+}, by=list(profile.id, status.profile, chromosome)])
+
+unsupervised.models <- rbind(unsupervised.models, unsupervised.models2)
+
+
+(unsupervised.changes <- unsupervised.models[, data.table(
+  change=changes[[1]]
+), by=list(profile.id, status.profile, chromosome, pen.name)])
+```
+
+\vspace{1cm}
+Plotting the data along with optimal segment means (green line segments) we get:
+
+
+```{r}
+gg.unsupervised+
+  facet_grid(pen.name ~ profile.id + chromosome, scales="free", space="free_x")+
+  theme(legend.box="horizontal")+
+  geom_vline(aes(
+    xintercept=change/1e6),
+    color="green",
+    size=1,
+    linetype="dashed",
+    data=unsupervised.changes)
+
+```
+
