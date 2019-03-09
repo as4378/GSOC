@@ -8,13 +8,9 @@ output:
     df_print: paged
 ---
 
-**Test 1**
 
 
-Loading the required packages:
-
-
-```{r}
+```{r include=FALSE}
 library(data.table)
 library(dplyr)
 library(changepoint)
@@ -23,7 +19,9 @@ library(microbenchmark)
 library(fpop)
 data(neuroblastoma, package="neuroblastoma")
 ```
-\vspace{1cm}
+
+**Test 1**
+
 
 Selecting one profile id and one chromosome to continue with the test.
 
@@ -32,13 +30,13 @@ Selecting one profile id and one chromosome to continue with the test.
 selected_profile_id = "1"
 selected_chromosome = "1"
 ```
-\vspace{1cm}
+\vspace{0.5cm}
 
 Creating a data table for selected profile:
 
 
 ```{r}
-selected.profiles <- data.table(filter(neuroblastoma$profiles, 
+selected.profiles = data.table(filter(neuroblastoma$profiles, 
                                        profile.id == selected_profile_id, 
                                        chromosome == selected_chromosome))
 ```
@@ -50,7 +48,7 @@ Plotting this problem in a grid we get:
 
 ```{r}
 
-gg.unsupervised <- ggplot()+
+gg.unsupervised = ggplot()+
   theme(
     panel.margin=grid::unit(0, "lines"),
     panel.border=element_rect(fill=NA, color="grey50")
@@ -68,18 +66,18 @@ gg.unsupervised <- ggplot()+
 print(gg.unsupervised)
 ```
 
-
+\vspace{0.5cm}
 Now, fitting the unsupervised change point model using the cpt.mean function and using "SIC0" as the penalty parameter we get:
 
 \vspace{1cm}
 ```{r}
-pen.name <- "SIC0"
-(models <- selected.profiles[, {
-  fit.pelt <- cpt.mean(
+pen.name = "SIC0"
+(models = selected.profiles[, {
+  fit.pelt = cpt.mean(
     logratio, penalty=pen.name, method="PELT")
-  end <- fit.pelt@cpts
-  before.change <- end[-length(end)]
-  after.change <- before.change+1L
+  end = fit.pelt@cpts
+  before.change = end[-length(end)]
+  after.change = before.change+1L
   data.table(
     pen.name,
     pen.value=fit.pelt@pen.value,
@@ -91,7 +89,7 @@ pen.name <- "SIC0"
 }, by=list(profile.id, chromosome)])
 
 
-(changes <- models[, data.table(
+(changes = models[, data.table(
   change=changes[[1]],before_mean = before_mean, after_mean = after_mean, end_pos=end_pos
 ), by=list(profile.id, chromosome, pen.name)])
 
@@ -127,7 +125,7 @@ gg.unsupervised+
 ```
 
 
-
+\vspace{1cm}
 **Test 2**
 
 
@@ -141,7 +139,7 @@ chromosome1 = "1"
 chromosome2 = "1"
 ```
 
-\vspace{1cm}
+\vspace{0.5cm}
 Creating data table for selected profiles:
 
 
@@ -154,11 +152,11 @@ selected.profiles2 = filter(neuroblastoma$profiles, profile.id == profile2,
 selected.profiles = data.table(rbind(selected.profiles1, selected.profiles2))
 ```
 
-\vspace{1cm}
+\vspace{0.5cm}
 Printing the problems:
 
 ```{r}
-gg.unsupervised <- ggplot()+
+gg.unsupervised = ggplot()+
   theme(
     panel.margin=grid::unit(0, "lines"),
     panel.border=element_rect(fill=NA, color="grey50")
@@ -178,19 +176,19 @@ print(gg.unsupervised)
 
 
 
-\vspace{1cm}
+\vspace{0.5cm}
 
 Now, fitting the unsupervised change point model using the cpt.mean function and using 3 penalty paramters "SIC0, BIC0 and AIC0" we get:
 
 
 ```{r}
-pen.name <- "SIC0"
-(models <- selected.profiles[, {
-  fit.pelt <- changepoint::cpt.mean(
+pen.name = "SIC0"
+(models = selected.profiles[, {
+  fit.pelt = changepoint::cpt.mean(
     logratio, penalty=pen.name, method="PELT")
-  end <- fit.pelt@cpts
-  before.change <- end[-length(end)]
-  after.change <- before.change+1L
+  end = fit.pelt@cpts
+  before.change = end[-length(end)]
+  after.change = before.change+1L
   data.table(
     pen.name,
     pen.value=fit.pelt@pen.value,
@@ -202,13 +200,13 @@ pen.name <- "SIC0"
     end_pos=position[length(position)])
 }, by=list(profile.id, chromosome)])
 
-pen.name <- "BIC0"
-(models1 <- selected.profiles[, {
-  fit.pelt <- changepoint::cpt.mean(
+pen.name = "BIC0"
+(models1 = selected.profiles[, {
+  fit.pelt = changepoint::cpt.mean(
     logratio, penalty=pen.name, method="PELT")
-  end <- fit.pelt@cpts
-  before.change <- end[-length(end)]
-  after.change <- before.change+1L
+  end = fit.pelt@cpts
+  before.change = end[-length(end)]
+  after.change = before.change+1L
   data.table(
     pen.name,
     pen.value=fit.pelt@pen.value,
@@ -220,16 +218,16 @@ pen.name <- "BIC0"
     end_pos=position[length(position)])
 }, by=list(profile.id, chromosome)])
 
-models <- rbind(models, models1)
+models = rbind(models, models1)
 
 
-pen.name <- "AIC0"
-(models2 <- selected.profiles[, {
-  fit.pelt <- changepoint::cpt.mean(
+pen.name = "AIC0"
+(models2 = selected.profiles[, {
+  fit.pelt = changepoint::cpt.mean(
     logratio, penalty=pen.name, method="PELT")
-  end <- fit.pelt@cpts
-  before.change <- end[-length(end)]
-  after.change <- before.change+1L
+  end = fit.pelt@cpts
+  before.change = end[-length(end)]
+  after.change = before.change+1L
   data.table(
     pen.name,
     pen.value=fit.pelt@pen.value,
@@ -241,16 +239,16 @@ pen.name <- "AIC0"
     end_pos=position[length(position)])
 }, by=list(profile.id, chromosome)])
 
-models <- rbind(models, models2)
+models = rbind(models, models2)
 
 
-changes <- models[, data.table(
+changes = models[, data.table(
   change=changes[[1]],before_mean = before_mean, 
   after_mean = after_mean, end_pos=end_pos,
   start = 0, end = changes[[1]], mean = before_mean
 ), by=list(profile.id, chromosome, pen.name)]
 
-segments <- changes[, data.table(
+segments = changes[, data.table(
   change=change,before_mean = before_mean, 
   after_mean = after_mean, end_pos=end_pos,
   start = change, end = end_pos, mean = after_mean
@@ -283,32 +281,31 @@ gg.unsupervised+
   )
 ```
 
-
+\vspace{1cm}
 **Test 3**
 
 
-Performing test on all chromosomes for profile ids in [1 100].
+Performing test on all the data sets (each profile.id and chromosome combination).
 
 
 ```{r}
-num_tests = 100
-#selected_data = filter(neuroblastoma$profiles, chromosome == sel_chromosome)
-selected_ids = unique(neuroblastoma$profiles$profile.id)[1:num_tests]
-selected_data = filter(neuroblastoma$profiles, profile.id %in% selected_ids)
+selected_ids = unique(neuroblastoma$profiles$profile.id)
+selected_data = neuroblastoma$profiles
+num_tests = length(selected_ids)
 ```
 
-
+\vspace{0.5cm}
 Performing the test:
 
 
 ```{r}
-timing_list <- list()
+timing_list = list()
 n = 1
 while(n <= num_tests){
   current_id = selected_ids[n]
   current_data = filter(selected_data, profile.id == current_id)
   length = length(current_data$logratio)
-  timing <- microbenchmark(
+  timing = microbenchmark(
     "cpt_mean"={
         cpt.mean(current_data$logratio, method="PELT", pen.value = 1)
     }, 
@@ -316,13 +313,15 @@ while(n <= num_tests){
       Fpop(current_data$logratio, 1)
     }, times=5)
   
-  timing_list[[paste(n)]] <- data.table(length, timing)
+  timing_list[[paste(n)]] = data.table(length, timing)
   n = n + 1
 }
 
-timing.dt <- do.call(rbind, timing_list)
+timing.dt = do.call(rbind, timing_list)
 
-ggplot(data = timing.dt, aes(x = log(timing.dt$length), y = log(timing.dt$time), col = timing.dt$expr))+
-  geom_smooth()+
-  labs(x="log(size)", y="log(time)", col="method")
+ggplot(data = timing.dt, aes(x = log(timing.dt$length), 
+                             y = log(timing.dt$time), 
+                             col = timing.dt$expr))+
+  geom_smooth() +
+  labs(x="log(size)", y="log(time(ms))", col="method") 
 ```
